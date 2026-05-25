@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Corne Tutorial — Learn your new layout</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg: #0e1116;
+    --panel: #161b22;
+    --panel-2: #1f2630;
+    --border: #2a323d;
+    --text: #d6dbe1;
+    --text-dim: #8b95a3;
+    --accent: #4dd0e1;
+    --accent-glow: #4dd0e155;
+    --good: #4ade80;
+    --bad: #f87171;
+    --warn: #fbbf24;
+    --thumb: #a78bfa;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+    min-height: 100vh;
+  }
+  .app { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 1rem; margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border); padding-bottom: 1rem;
+  }
+  header h1 { margin: 0; font-size: 1.25rem; letter-spacing: 0.01em; }
+  header h1 span { color: var(--accent); }
+  .progress { color: var(--text-dim); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+
+  .step {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;
+  }
+  .step h2 { margin: 0 0 0.25rem; font-size: 1.05rem; color: var(--accent); }
+  .layer-tag {
+    display: inline-block; font-size: 0.7rem; padding: 2px 8px;
+    border-radius: 999px; background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--text-dim); margin-left: 0.5rem;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .layer-tag.base { color: var(--text); }
+  .layer-tag.lower { color: var(--accent); border-color: var(--accent); }
+  .layer-tag.raise { color: var(--thumb); border-color: var(--thumb); }
+  .layer-tag.adjust { color: var(--warn); border-color: var(--warn); }
+  .step p { color: var(--text-dim); line-height: 1.5; margin: 0.5rem 0; }
+  .step code, code.inline {
+    background: var(--panel-2); padding: 1px 6px; border-radius: 4px;
+    color: var(--accent); font-size: 0.9em;
+  }
+  .step ul { color: var(--text-dim); line-height: 1.7; }
+  .target-line {
+    display: flex; gap: 0.75rem; align-items: center;
+    margin-top: 1rem; flex-wrap: wrap;
+  }
+  .target-label { color: var(--text-dim); font-size: 0.85rem; min-width: 5.5rem; }
+  .target-text, .typed {
+    font-family: "JetBrains Mono", "SF Mono", Menlo, monospace;
+    font-size: 1.2rem; letter-spacing: 0.05em;
+    padding: 6px 14px; border-radius: 6px;
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+  }
+  .typed { border-style: dashed; min-width: 4rem; min-height: 1.6em; white-space: pre; }
+  .typed.good { border-color: var(--good); color: var(--good); border-style: solid; }
+  .typed.bad  { border-color: var(--bad);  color: var(--bad); }
+
+  .kbd-wrap {
+    margin: 1.25rem 0 0.25rem; padding: 1.25rem 1rem;
+    background: var(--panel-2); border-radius: 12px; border: 1px solid var(--border);
+    display: flex; justify-content: center; overflow: hidden;
+  }
+  .kbd { display: flex; gap: 2.5rem; }
+  .half { display: flex; gap: 4px; }
+  .col { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+  .col[data-stagger="0"] { transform: translateY(4px); }
+  .col[data-stagger="1"] { transform: translateY(-2px); }
+  .col[data-stagger="2"] { transform: translateY(-8px); }
+  .col[data-stagger="3"] { transform: translateY(-2px); }
+  .col[data-stagger="4"] { transform: translateY(2px); }
+  .col[data-stagger="5"] { transform: translateY(6px); }
+
+  .key {
+    width: 44px; height: 44px; border-radius: 7px;
+    background: #20262f; border: 1px solid #2f3742;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem; color: var(--text);
+    font-family: "JetBrains Mono", "SF Mono", Menlo, monospace;
+    text-align: center; line-height: 1.05; user-select: none;
+    transition: background 80ms, border-color 80ms, box-shadow 120ms, transform 80ms;
+  }
+  .key.thumb { width: 50px; border-radius: 999px; }
+  .key.highlight {
+    background: linear-gradient(180deg, #1e3a44, #143038);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow), 0 0 12px var(--accent-glow);
+    color: var(--accent);
+  }
+  .key.modkey {
+    background: linear-gradient(180deg, #2a223d, #1d1830);
+    border-color: var(--thumb);
+    box-shadow: 0 0 0 3px #a78bfa44, 0 0 10px #a78bfa66;
+    color: var(--thumb);
+  }
+  .key.pressed {
+    background: #233b25; border-color: var(--good); color: var(--good);
+    transform: translateY(1px);
+  }
+  .key.wrong {
+    background: #3b2425; border-color: var(--bad); color: var(--bad);
+    transform: translateY(1px);
+  }
+  .thumbs { display: flex; gap: 4px; align-items: flex-end; margin-top: 4px; }
+  .thumbs.left  { margin-left: 90px; transform: rotate(-8deg); transform-origin: top right; }
+  .thumbs.right { margin-right: 90px; transform: rotate(8deg); transform-origin: top left; }
+
+  .controls { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; gap: 1rem; }
+  button {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 16px; font: inherit; cursor: pointer;
+    transition: background 100ms, border-color 100ms;
+  }
+  button:hover:not(:disabled) { background: #252d38; border-color: #3a4452; }
+  button.primary { background: var(--accent); color: #0a0e13; border-color: var(--accent); font-weight: 600; }
+  button.primary:hover:not(:disabled) { background: #6ee0ee; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .hint { color: var(--text-dim); font-size: 0.85rem; line-height: 1.5; }
+
+  .legend {
+    display: flex; gap: 1.25rem; font-size: 0.78rem; color: var(--text-dim);
+    margin-top: 0.5rem; justify-content: center; flex-wrap: wrap;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; border: 1px solid var(--border); }
+  .legend i.h { background: #1e3a44; border-color: var(--accent); box-shadow: 0 0 6px var(--accent-glow); }
+  .legend i.m { background: #2a223d; border-color: var(--thumb); }
+  .legend i.p { background: #233b25; border-color: var(--good); }
+
+  .toast {
+    position: fixed; bottom: 1.5rem; left: 50%;
+    transform: translateX(-50%) translateY(2rem);
+    background: var(--panel); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 18px; border-radius: 8px;
+    opacity: 0; transition: opacity 200ms, transform 200ms;
+    pointer-events: none; z-index: 10;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.good { border-color: var(--good); color: var(--good); }
+  .toast.bad  { border-color: var(--bad);  color: var(--bad); }
+
+  .done-banner { text-align: center; padding: 2rem 1rem; }
+  .done-banner .check { font-size: 3rem; color: var(--good); margin-bottom: 0.5rem; }
+  .done-banner h2 { color: var(--good); margin: 0.25rem 0 1rem; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Corne <span>Tutorial</span></h1>
+    <div class="progress" id="progress">Step 1 / N</div>
+  </header>
+
+  <div class="step" id="step-card">
+    <h2 id="step-title">Loading…<span class="layer-tag base" id="step-layer">base</span></h2>
+    <div id="step-body"></div>
+    <div class="target-line" id="target-line" hidden>
+      <span class="target-label" id="target-label-text">type:</span>
+      <span class="target-text" id="target-text"></span>
+      <span class="target-label">you:</span>
+      <span class="typed" id="typed"> </span>
+    </div>
+  </div>
+
+  <div class="kbd-wrap"><div class="kbd" id="kbd"></div></div>
+  <div class="legend">
+    <span><i class="h"></i> press this</span>
+    <span><i class="m"></i> hold this layer key</span>
+    <span><i class="p"></i> correct</span>
+  </div>
+
+  <div class="controls">
+    <button id="prev">← Back</button>
+    <div class="hint" id="hint"></div>
+    <button id="next" class="primary">Next →</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Step bodies live as templates so JS can clone them without using innerHTML -->
+<template id="body-welcome">
+  <p>This tutorial walks you through the layout I just flashed onto your Corne — QWERTY base with custom <code>Lower</code> and <code>Raise</code> layers.</p>
+  <p>You'll do short typing exercises. The diagram below glows <strong>cyan</strong> on keys you should press, and <strong>purple</strong> on layer keys you should hold.</p>
+  <p>Click <strong>Next</strong> (or press →) to begin.</p>
+</template>
+<template id="body-alphas">
+  <p>Type the lowercase word on the right. Just normal QWERTY — no layers.</p>
+</template>
+<template id="body-shift">
+  <p>Now with a capital. Use either Shift key (left pinky on base). The <code>!</code> at the end is Shift+1 — easy from base for now.</p>
+</template>
+<template id="body-thumbs">
+  <p>Type <code>ok</code> then press the <strong>Enter</strong> thumb key (inner-right thumb). The newline goes into the field.</p>
+</template>
+<template id="body-numbers-left">
+  <p>Hold the <strong>Lower</strong> thumb key (middle-left thumb) and tap the top row left-to-right. The diagram below now shows what each position produces while Lower is held.</p>
+</template>
+<template id="body-numbers-right">
+  <p>Right-hand top row, still holding Lower.</p>
+</template>
+<template id="body-arrows">
+  <p>Still on Lower. The right-hand home row is your arrow cluster: <code>H J K L</code> → ← ↓ ↑ →. Tap them in this order: <strong>← ↓ ↑ →</strong>.</p>
+</template>
+<template id="body-shifted-row">
+  <p>Hold the <strong>Raise</strong> thumb key (middle-right thumb) and tap the left top row. You should get the shifted-number symbols without using Shift.</p>
+</template>
+<template id="body-brackets">
+  <p>This is the layout you picked: all three bracket pairs on the right-hand home row. Hold Raise and sweep across <code>H J K L ; '</code>.</p>
+</template>
+<template id="body-ops">
+  <p>Right-hand bottom row on Raise. Hold Raise and tap <code>N M , . / Esc-position</code>.</p>
+</template>
+<template id="body-combined">
+  <p>A realistic coding sample. You'll switch between base, Raise (for <code>[</code> <code>]</code> <code>=</code> <code>(</code> <code>)</code> <code>+</code> <code>*</code>) and back. Take your time.</p>
+  <p class="hint">Tip: space comes from the inner-left thumb, no layer.</p>
+</template>
+<template id="body-adjust">
+  <p>Hold <strong>both</strong> Lower and Raise at the same time to reach the Adjust layer. Don't press anything on it right now — but here's what's there:</p>
+  <ul>
+    <li><code>Q</code> position → <strong>bootloader</strong> (puts the half in DFU mode for re-flashing)</li>
+    <li><code>Z</code> / <code>Esc</code> positions → <strong>sys reset</strong></li>
+    <li>Top row → Bluetooth profile selection (for when you go wireless)</li>
+  </ul>
+  <p>Now you can re-flash without unplugging cables or pressing the reset button: hold Lower+Raise, tap Q on either half, and it appears as NICENANO.</p>
+</template>
+<template id="body-done">
+  <div class="done-banner">
+    <div class="check">✓</div>
+    <h2>You've toured the whole layout.</h2>
+    <p>Edit <code>~/zmk-config/config/corne.keymap</code>, <code>git push</code>, and a new firmware build will be waiting in ~2 minutes.</p>
+    <p class="hint">Re-flash via Adjust + Q (no cable juggling).</p>
+  </div>
+</template>
+
+<script>
+"use strict";
+
+const LAYOUT = {
+  left: [
+    [
+      { id:'L00', code:'Tab',         base:'Tab',  lower:'Tab',  raise:'Tab' },
+      { id:'L01', code:'KeyQ',        base:'Q',    lower:'1',    raise:'!' },
+      { id:'L02', code:'KeyW',        base:'W',    lower:'2',    raise:'@' },
+      { id:'L03', code:'KeyE',        base:'E',    lower:'3',    raise:'#' },
+      { id:'L04', code:'KeyR',        base:'R',    lower:'4',    raise:'$' },
+      { id:'L05', code:'KeyT',        base:'T',    lower:'5',    raise:'%' },
+    ],
+    [
+      { id:'L10', code:'ControlLeft', base:'Ctrl', lower:'Ctrl', raise:'Ctrl' },
+      { id:'L11', code:'KeyA',        base:'A',    lower:'·',    raise:'`' },
+      { id:'L12', code:'KeyS',        base:'S',    lower:'·',    raise:'~' },
+      { id:'L13', code:'KeyD',        base:'D',    lower:'·',    raise:'·' },
+      { id:'L14', code:'KeyF',        base:'F',    lower:'·',    raise:'·' },
+      { id:'L15', code:'KeyG',        base:'G',    lower:'·',    raise:'·' },
+    ],
+    [
+      { id:'L20', code:'ShiftLeft',   base:'Shft', lower:'Shft', raise:'Shft' },
+      { id:'L21', code:'KeyZ',        base:'Z',    lower:'·',    raise:'·' },
+      { id:'L22', code:'KeyX',        base:'X',    lower:'·',    raise:'·' },
+      { id:'L23', code:'KeyC',        base:'C',    lower:'·',    raise:'·' },
+      { id:'L24', code:'KeyV',        base:'V',    lower:'·',    raise:'·' },
+      { id:'L25', code:'KeyB',        base:'B',    lower:'·',    raise:'·' },
+    ],
+  ],
+  right: [
+    [
+      { id:'R00', code:'KeyY',        base:'Y',    lower:'6',    raise:'*' },
+      { id:'R01', code:'KeyU',        base:'U',    lower:'7',    raise:'&' },
+      { id:'R02', code:'KeyI',        base:'I',    lower:'8',    raise:'|' },
+      { id:'R03', code:'KeyO',        base:'O',    lower:'9',    raise:'^' },
+      { id:'R04', code:'KeyP',        base:'P',    lower:'0',    raise:'?' },
+      { id:'R05', code:'Backspace',   base:'Bksp', lower:'Bksp', raise:'Bksp' },
+    ],
+    [
+      { id:'R10', code:'KeyH',        base:'H',    lower:'←',    raise:'(' },
+      { id:'R11', code:'KeyJ',        base:'J',    lower:'↓',    raise:')' },
+      { id:'R12', code:'KeyK',        base:'K',    lower:'↑',    raise:'[' },
+      { id:'R13', code:'KeyL',        base:'L',    lower:'→',    raise:']' },
+      { id:'R14', code:'Semicolon',   base:';',    lower:'·',    raise:'{' },
+      { id:'R15', code:'Quote',       base:"'",    lower:'·',    raise:'}' },
+    ],
+    [
+      { id:'R20', code:'KeyN',        base:'N',    lower:'·',    raise:'-' },
+      { id:'R21', code:'KeyM',        base:'M',    lower:'·',    raise:'=' },
+      { id:'R22', code:'Comma',       base:',',    lower:'·',    raise:'+' },
+      { id:'R23', code:'Period',      base:'.',    lower:'·',    raise:'_' },
+      { id:'R24', code:'Slash',       base:'/',    lower:'·',    raise:'/' },
+      { id:'R25', code:'Escape',      base:'Esc',  lower:'Esc',  raise:'\\' },
+    ],
+  ],
+  thumbs: {
+    left:  [
+      { id:'LT0', code:'MetaLeft',   base:'⌘',    lower:'⌘',    raise:'⌘' },
+      { id:'LT1', code:'__LOWER',    base:'LWR',  lower:'LWR',  raise:'LWR' },
+      { id:'LT2', code:'Space',      base:'␣',    lower:'␣',    raise:'␣' },
+    ],
+    right: [
+      { id:'RT0', code:'Enter',      base:'⏎',    lower:'⏎',    raise:'⏎' },
+      { id:'RT1', code:'__RAISE',    base:'RSE',  lower:'RSE',  raise:'RSE' },
+      { id:'RT2', code:'AltRight',   base:'⌥',    lower:'⌥',    raise:'⌥' },
+    ]
+  }
+};
+
+function renderKeyboard() {
+  const root = document.getElementById('kbd');
+  root.replaceChildren();
+  root.append(buildHalf('left',  LAYOUT.left,  LAYOUT.thumbs.left));
+  root.append(buildHalf('right', LAYOUT.right, LAYOUT.thumbs.right));
+}
+function buildHalf(side, rows, thumbs) {
+  const wrap = document.createElement('div');
+  const half = document.createElement('div');
+  half.className = 'half';
+  for (let c = 0; c < 6; c++) {
+    const col = document.createElement('div');
+    col.className = 'col';
+    col.dataset.stagger = side === 'left' ? c : 5 - c;
+    for (let r = 0; r < 3; r++) col.append(makeKeyEl(rows[r][c], false));
+    half.append(col);
+  }
+  const t = document.createElement('div');
+  t.className = 'thumbs ' + side;
+  thumbs.forEach(tk => t.append(makeKeyEl(tk, true)));
+  wrap.append(half, t);
+  return wrap;
+}
+function makeKeyEl(k, isThumb) {
+  const el = document.createElement('div');
+  el.className = 'key' + (isThumb ? ' thumb' : '');
+  el.id = 'key-' + k.id;
+  el.dataset.code = k.code;
+  el.dataset.baseLabel = k.base;
+  el.dataset.lowerLabel = k.lower || '';
+  el.dataset.raiseLabel = k.raise || '';
+  const span = document.createElement('span');
+  span.textContent = k.base;
+  el.append(span);
+  return el;
+}
+function setLayerLabels(layer) {
+  document.querySelectorAll('.key').forEach(el => {
+    const label = el.dataset[layer + 'Label'] || el.dataset.baseLabel;
+    el.firstChild.textContent = label;
+  });
+}
+
+const STEPS = [
+  { title:"Welcome",                          layer:"base",   mode:"info",         body:"body-welcome",       highlight:[], mod:[] },
+  { title:"Base layer — alphas",              layer:"base",   mode:"sequence",     body:"body-alphas",        expected:"hello",         highlight:['KeyH','KeyE','KeyL','KeyO'], mod:[] },
+  { title:"Base layer — Shift",               layer:"base",   mode:"sequence",     body:"body-shift",         expected:"Hi!",           highlight:['ShiftLeft','KeyH','KeyI','Digit1'], mod:[] },
+  { title:"Backspace & Enter on thumbs",      layer:"base",   mode:"sequence",     body:"body-thumbs",        expected:"ok\n",          highlight:['KeyO','KeyK','Enter'], mod:[] },
+  { title:"Lower — numbers (left)",           layer:"lower",  mode:"sequence",     body:"body-numbers-left",  expected:"12345",         highlight:['KeyQ','KeyW','KeyE','KeyR','KeyT'], mod:['__LOWER'] },
+  { title:"Lower — numbers (right)",          layer:"lower",  mode:"sequence",     body:"body-numbers-right", expected:"67890",         highlight:['KeyY','KeyU','KeyI','KeyO','KeyP'], mod:['__LOWER'] },
+  { title:"Lower — arrow keys",               layer:"lower",  mode:"tap-sequence", body:"body-arrows",        expected:['ArrowLeft','ArrowDown','ArrowUp','ArrowRight'], highlight:['KeyH','KeyJ','KeyK','KeyL'], mod:['__LOWER'] },
+  { title:"Raise — shifted-number row",       layer:"raise",  mode:"sequence",     body:"body-shifted-row",   expected:"!@#$%",         highlight:['KeyQ','KeyW','KeyE','KeyR','KeyT'], mod:['__RAISE'] },
+  { title:"Raise — brackets (the big win)",   layer:"raise",  mode:"sequence",     body:"body-brackets",      expected:"()[]{}",        highlight:['KeyH','KeyJ','KeyK','KeyL','Semicolon','Quote'], mod:['__RAISE'] },
+  { title:"Raise — operators",                layer:"raise",  mode:"sequence",     body:"body-ops",           expected:"-=+_/\\",       highlight:['KeyN','KeyM','Comma','Period','Slash','Escape'], mod:['__RAISE'] },
+  { title:"Putting it together",              layer:"base",   mode:"sequence",     body:"body-combined",      expected:"arr[0] = (x + 1) * 2;", highlight:[], mod:[] },
+  { title:"Adjust layer — escape hatch",      layer:"adjust", mode:"info",         body:"body-adjust",        highlight:[], mod:['__LOWER','__RAISE'] },
+  { title:"Done",                             layer:"base",   mode:"done",         body:"body-done",          highlight:[], mod:[] },
+];
+
+let stepIdx = 0;
+let typed = "";
+let tapIdx = 0;
+
+function renderStep() {
+  const step = STEPS[stepIdx];
+  document.getElementById('progress').textContent = `Step ${stepIdx + 1} / ${STEPS.length}`;
+
+  // Title + layer tag
+  document.getElementById('step-title').firstChild.textContent = step.title;
+  const tag = document.getElementById('step-layer');
+  tag.className = 'layer-tag ' + step.layer;
+  tag.textContent = step.layer;
+
+  // Body: clone the template
+  const body = document.getElementById('step-body');
+  body.replaceChildren();
+  const tmpl = document.getElementById(step.body);
+  if (tmpl) body.append(tmpl.content.cloneNode(true));
+
+  // Set layer labels on diagram
+  setLayerLabels(step.layer === 'adjust' ? 'base' : step.layer);
+
+  // Reset key states
+  document.querySelectorAll('.key').forEach(el => el.classList.remove('highlight','modkey','pressed','wrong'));
+  step.highlight.forEach(code => {
+    document.querySelectorAll(`.key[data-code="${code}"]`).forEach(el => el.classList.add('highlight'));
+  });
+  step.mod.forEach(code => {
+    document.querySelectorAll(`.key[data-code="${code}"]`).forEach(el => el.classList.add('modkey'));
+  });
+
+  // Target line
+  const tl = document.getElementById('target-line');
+  const tt = document.getElementById('target-text');
+  const ty = document.getElementById('typed');
+  const tlabel = document.getElementById('target-label-text');
+  ty.className = 'typed';
+
+  if (step.mode === 'sequence') {
+    tl.hidden = false;
+    tlabel.textContent = 'type:';
+    tt.textContent = step.expected.replace(/\n/g, '↵');
+    ty.textContent = typed.replace(/\n/g, '↵') || ' ';
+  } else if (step.mode === 'tap-sequence') {
+    tl.hidden = false;
+    tlabel.textContent = 'tap:';
+    tt.textContent = step.expected.map(arrowLabel).join(' ');
+    ty.textContent = `${tapIdx} / ${step.expected.length}`;
+  } else {
+    tl.hidden = true;
+  }
+
+  // Buttons
+  document.getElementById('prev').disabled = stepIdx === 0;
+  const nb = document.getElementById('next');
+  if (step.mode === 'info' || step.mode === 'done') {
+    nb.disabled = false;
+    nb.textContent = stepIdx === STEPS.length - 1 ? 'Restart' : 'Next →';
+  } else {
+    const done = isStepComplete(step);
+    nb.disabled = !done;
+    nb.textContent = done ? 'Next →' : 'Finish to continue…';
+  }
+
+  document.getElementById('hint').textContent =
+    step.mode === 'sequence'      ? 'Type into the page (no input field needed).'
+    : step.mode === 'tap-sequence'? 'Tap the listed keys in order.'
+    : '';
+}
+
+function arrowLabel(code) { return ({ ArrowLeft:'←', ArrowRight:'→', ArrowUp:'↑', ArrowDown:'↓' })[code] || code; }
+function isStepComplete(step) {
+  if (step.mode === 'sequence') return typed === step.expected;
+  if (step.mode === 'tap-sequence') return tapIdx === step.expected.length;
+  return true;
+}
+
+let toastTimer;
+function toast(msg, kind) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (kind || '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = 'toast ' + (kind || ''); }, 1200);
+}
+function flashKey(code, kind) {
+  document.querySelectorAll(`.key[data-code="${code}"]`).forEach(el => {
+    el.classList.add(kind);
+    setTimeout(() => el.classList.remove(kind), 250);
+  });
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  const step = STEPS[stepIdx];
+
+  if (step.mode === 'info' || step.mode === 'done') {
+    if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+    return;
+  }
+
+  if (step.mode === 'sequence') {
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      typed = typed.slice(0, -1);
+      flashKey('Backspace', 'pressed');
+      updateTyped(step);
+      return;
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      typed += '\n';
+      flashKey('Enter', 'pressed');
+    } else if (e.key.length === 1) {
+      typed += e.key;
+      flashKey(e.code, 'pressed');
+    } else {
+      return;
+    }
+    updateTyped(step);
+    return;
+  }
+
+  if (step.mode === 'tap-sequence') {
+    const target = step.expected[tapIdx];
+    if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) {
+      e.preventDefault();
+      if (e.key === target) {
+        tapIdx++;
+        flashKey(e.code, 'pressed');
+        renderStep();
+        if (tapIdx === step.expected.length) toast('Sequence complete', 'good');
+      } else {
+        flashKey(e.code, 'wrong');
+        toast('Expected ' + arrowLabel(target), 'bad');
+      }
+    }
+  }
+});
+
+function updateTyped(step) {
+  const ty = document.getElementById('typed');
+  const expected = step.expected;
+  const isPrefix = expected.startsWith(typed);
+  ty.textContent = typed.replace(/\n/g, '↵') || ' ';
+  ty.className = 'typed' + (typed === expected ? ' good' : (!isPrefix ? ' bad' : ''));
+  if (typed === expected) toast('Perfect.', 'good');
+  const nb = document.getElementById('next');
+  nb.disabled = (typed !== expected);
+  nb.textContent = (typed === expected) ? 'Next →' : 'Finish to continue…';
+}
+
+function next() {
+  const step = STEPS[stepIdx];
+  if (stepIdx === STEPS.length - 1) { restart(); return; }
+  if (!isStepComplete(step) && step.mode !== 'info' && step.mode !== 'done') return;
+  stepIdx++; typed = ""; tapIdx = 0;
+  renderStep();
+}
+function prev() {
+  if (stepIdx === 0) return;
+  stepIdx--; typed = ""; tapIdx = 0;
+  renderStep();
+}
+function restart() { stepIdx = 0; typed = ""; tapIdx = 0; renderStep(); }
+
+document.getElementById('next').addEventListener('click', next);
+document.getElementById('prev').addEventListener('click', prev);
+
+renderKeyboard();
+renderStep();
+</script>
+</body>
+</html>
