@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Corne Keymap Reference</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg: #0e1116;
+    --panel: #161b22;
+    --panel-2: #1f2630;
+    --border: #2a323d;
+    --text: #d6dbe1;
+    --text-dim: #8b95a3;
+    --base: #d6dbe1;
+    --lower: #4dd0e1;
+    --raise: #a78bfa;
+    --adjust: #fbbf24;
+    --warn: #f87171;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+    min-height: 100vh;
+  }
+  .app { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 1rem; margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border); padding-bottom: 1rem;
+  }
+  header h1 { margin: 0; font-size: 1.25rem; letter-spacing: 0.01em; }
+  header h1 span { color: var(--lower); }
+  header a {
+    color: var(--text-dim); font-size: 0.85rem; text-decoration: none;
+    border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px;
+  }
+  header a:hover { color: var(--text); border-color: #3a4452; }
+
+  .tabs {
+    display: flex; gap: 6px; margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border); padding-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .tab {
+    background: var(--panel); border: 1px solid var(--border);
+    color: var(--text-dim); padding: 8px 16px; border-radius: 8px;
+    cursor: pointer; font: inherit; transition: all 100ms;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .tab .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: 0.5; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); border-color: currentColor; }
+  .tab.active .dot { opacity: 1; }
+  .tab[data-layer="base"].active   { color: var(--base); }
+  .tab[data-layer="lower"].active  { color: var(--lower); }
+  .tab[data-layer="raise"].active  { color: var(--raise); }
+  .tab[data-layer="adjust"].active { color: var(--adjust); }
+  .tab kbd {
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 3px; padding: 1px 5px; font: inherit; font-size: 0.75em;
+    color: var(--text-dim);
+  }
+
+  .info-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1rem; gap: 1rem; flex-wrap: wrap;
+  }
+  .layer-name {
+    font-size: 1.1rem; font-weight: 600;
+    padding: 4px 12px; border-radius: 6px; border: 1px solid currentColor;
+  }
+  .layer-name[data-layer="base"]   { color: var(--base); }
+  .layer-name[data-layer="lower"]  { color: var(--lower); }
+  .layer-name[data-layer="raise"]  { color: var(--raise); }
+  .layer-name[data-layer="adjust"] { color: var(--adjust); }
+  .layer-hint { color: var(--text-dim); font-size: 0.9rem; }
+
+  .kbd-wrap {
+    padding: 2rem 1rem; background: var(--panel); border-radius: 14px;
+    border: 1px solid var(--border); display: flex; justify-content: center;
+    overflow: hidden;
+  }
+  .kbd { display: flex; gap: 2.5rem; }
+  .half { display: flex; gap: 5px; }
+  .col { display: flex; flex-direction: column; gap: 5px; align-items: center; }
+  .col[data-stagger="0"] { transform: translateY(4px); }
+  .col[data-stagger="1"] { transform: translateY(-2px); }
+  .col[data-stagger="2"] { transform: translateY(-8px); }
+  .col[data-stagger="3"] { transform: translateY(-2px); }
+  .col[data-stagger="4"] { transform: translateY(2px); }
+  .col[data-stagger="5"] { transform: translateY(6px); }
+  .key {
+    width: 54px; height: 54px; border-radius: 8px;
+    background: #20262f; border: 1px solid #2f3742;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.95rem; color: var(--text);
+    font-family: "JetBrains Mono", "SF Mono", Menlo, monospace;
+    text-align: center; line-height: 1.05; user-select: none;
+    transition: background 120ms, border-color 120ms, color 120ms;
+  }
+  .key.thumb { width: 62px; border-radius: 999px; }
+  .key.transparent { color: var(--text-dim); opacity: 0.45; }
+
+  .key.layer-key {
+    background: linear-gradient(180deg, #2a223d, #1d1830);
+    border-color: var(--raise); color: var(--raise);
+  }
+  .key.layer-key.lower {
+    background: linear-gradient(180deg, #1e3a44, #143038);
+    border-color: var(--lower); color: var(--lower);
+  }
+  .key.mod {
+    color: var(--text-dim);
+    background: #1a1f27;
+    border-color: #3a4452;
+  }
+  .key.danger { color: var(--warn); border-color: #44262b; }
+  .key.bt { color: var(--lower); }
+  .key.boot { color: var(--adjust); border-color: #4a3b1b; }
+
+  .thumbs { display: flex; gap: 5px; align-items: flex-end; margin-top: 5px; }
+  .thumbs.left  { margin-left: 110px; transform: rotate(-8deg); transform-origin: top right; }
+  .thumbs.right { margin-right: 110px; transform: rotate(8deg);  transform-origin: top left; }
+
+  .legend {
+    margin-top: 1.5rem; padding: 1rem 1.25rem;
+    background: var(--panel); border-radius: 10px; border: 1px solid var(--border);
+    color: var(--text-dim); font-size: 0.85rem; line-height: 1.7;
+  }
+  .legend h3 { margin: 0 0 0.5rem; color: var(--text); font-size: 0.9rem; }
+  .legend code {
+    background: var(--panel-2); padding: 1px 6px; border-radius: 4px;
+    color: var(--lower); font-size: 0.9em;
+  }
+  .legend table { width: 100%; border-collapse: collapse; }
+  .legend td { padding: 4px 8px; vertical-align: top; }
+  .legend td:first-child { color: var(--text); white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Corne <span>Reference</span></h1>
+    <a href="tutorial.html">Tutorial →</a>
+  </header>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-layer="base">   <span class="dot"></span> Base   <kbd>1</kbd></button>
+    <button class="tab"        data-layer="lower">  <span class="dot"></span> Lower  <kbd>2</kbd></button>
+    <button class="tab"        data-layer="raise">  <span class="dot"></span> Raise  <kbd>3</kbd></button>
+    <button class="tab"        data-layer="adjust"> <span class="dot"></span> Adjust <kbd>4</kbd></button>
+  </div>
+
+  <div class="info-bar">
+    <span class="layer-name" id="layer-name" data-layer="base">Base layer</span>
+    <span class="layer-hint" id="layer-hint">Default — what types when no layer keys are held.</span>
+  </div>
+
+  <div class="kbd-wrap"><div class="kbd" id="kbd"></div></div>
+
+  <div class="legend" id="legend"></div>
+</div>
+
+<script>
+"use strict";
+
+const LAYER_HINTS = {
+  base:   "Default — what types when no layer keys are held.",
+  lower:  "Hold the middle-LEFT thumb key (Lower). Numbers + arrow keys.",
+  raise:  "Hold the middle-RIGHT thumb key (Raise). Symbols + brackets + operators.",
+  adjust: "Hold BOTH Lower and Raise. Bluetooth + bootloader + Studio unlock."
+};
+
+// Each key: id, base, lower, raise, adjust labels + optional style hints
+const LAYOUT = {
+  left: [
+    [
+      { id:'L00', base:'Tab',  lower:'Tab',  raise:'Tab',  adjust:'·' },
+      { id:'L01', base:'Q',    lower:'1',    raise:'!',    adjust:'BT clr', style:'danger' },
+      { id:'L02', base:'W',    lower:'2',    raise:'@',    adjust:'BT 0',   style:'bt' },
+      { id:'L03', base:'E',    lower:'3',    raise:'#',    adjust:'BT 1',   style:'bt' },
+      { id:'L04', base:'R',    lower:'4',    raise:'$',    adjust:'BT 2',   style:'bt' },
+      { id:'L05', base:'T',    lower:'5',    raise:'%',    adjust:'BT 3',   style:'bt' },
+    ],
+    [
+      { id:'L10', base:'Ctrl', lower:'Ctrl', raise:'Ctrl', adjust:'Boot',   style:'boot' },
+      { id:'L11', base:'A',    lower:'·',    raise:'`',    adjust:'Unlock', style:'bt' },
+      { id:'L12', base:'S',    lower:'·',    raise:'~',    adjust:'·' },
+      { id:'L13', base:'D',    lower:'·',    raise:'·',    adjust:'·' },
+      { id:'L14', base:'F',    lower:'·',    raise:'·',    adjust:'·' },
+      { id:'L15', base:'G',    lower:'·',    raise:'·',    adjust:'·' },
+    ],
+    [
+      { id:'L20', base:'Shft', lower:'Shft', raise:'Shft', adjust:'Reset', style:'danger' },
+      { id:'L21', base:'Z',    lower:'·',    raise:'·',    adjust:'·' },
+      { id:'L22', base:'X',    lower:'·',    raise:'·',    adjust:'·' },
+      { id:'L23', base:'C',    lower:'·',    raise:'·',    adjust:'·' },
+      { id:'L24', base:'V',    lower:'·',    raise:'·',    adjust:'·' },
+      { id:'L25', base:'B',    lower:'·',    raise:'·',    adjust:'·' },
+    ],
+  ],
+  right: [
+    [
+      { id:'R00', base:'Y',    lower:'6',    raise:'*',    adjust:'·' },
+      { id:'R01', base:'U',    lower:'7',    raise:'&',    adjust:'·' },
+      { id:'R02', base:'I',    lower:'8',    raise:'|',    adjust:'·' },
+      { id:'R03', base:'O',    lower:'9',    raise:'^',    adjust:'·' },
+      { id:'R04', base:'P',    lower:'0',    raise:'?',    adjust:'·' },
+      { id:'R05', base:'Bksp', lower:'Bksp', raise:'Bksp', adjust:'·' },
+    ],
+    [
+      { id:'R10', base:'H',    lower:'←',    raise:'(',    adjust:'·' },
+      { id:'R11', base:'J',    lower:'↓',    raise:')',    adjust:'·' },
+      { id:'R12', base:'K',    lower:'↑',    raise:'[',    adjust:'·' },
+      { id:'R13', base:'L',    lower:'→',    raise:']',    adjust:'·' },
+      { id:'R14', base:';',    lower:'·',    raise:'{',    adjust:'·' },
+      { id:'R15', base:"'",    lower:'·',    raise:'}',    adjust:'Boot', style:'boot' },
+    ],
+    [
+      { id:'R20', base:'N',    lower:'·',    raise:'-',    adjust:'·' },
+      { id:'R21', base:'M',    lower:'·',    raise:'=',    adjust:'·' },
+      { id:'R22', base:',',    lower:'·',    raise:'+',    adjust:'·' },
+      { id:'R23', base:'.',    lower:'·',    raise:'_',    adjust:'·' },
+      { id:'R24', base:'/',    lower:'·',    raise:'/',    adjust:'·' },
+      { id:'R25', base:'Esc',  lower:'Esc',  raise:'\\',   adjust:'Reset', style:'danger' },
+    ],
+  ],
+  thumbs: {
+    left: [
+      { id:'LT0', base:'⌘',    lower:'⌘',    raise:'⌘',    adjust:'·' },
+      { id:'LT1', base:'LWR',  lower:'LWR',  raise:'LWR',  adjust:'LWR', style:'layer-key lower' },
+      { id:'LT2', base:'␣',    lower:'␣',    raise:'␣',    adjust:'·' },
+    ],
+    right: [
+      { id:'RT0', base:'⏎',    lower:'⏎',    raise:'⏎',    adjust:'·' },
+      { id:'RT1', base:'RSE',  lower:'RSE',  raise:'RSE',  adjust:'RSE', style:'layer-key' },
+      { id:'RT2', base:'⌥',    lower:'⌥',    raise:'⌥',    adjust:'·' },
+    ]
+  }
+};
+
+let currentLayer = 'base';
+
+function renderKeyboard() {
+  const root = document.getElementById('kbd');
+  root.replaceChildren();
+  root.append(buildHalf('left',  LAYOUT.left,  LAYOUT.thumbs.left));
+  root.append(buildHalf('right', LAYOUT.right, LAYOUT.thumbs.right));
+}
+function buildHalf(side, rows, thumbs) {
+  const wrap = document.createElement('div');
+  const half = document.createElement('div');
+  half.className = 'half';
+  for (let c = 0; c < 6; c++) {
+    const col = document.createElement('div');
+    col.className = 'col';
+    col.dataset.stagger = side === 'left' ? c : 5 - c;
+    for (let r = 0; r < 3; r++) col.append(makeKeyEl(rows[r][c], false));
+    half.append(col);
+  }
+  const t = document.createElement('div');
+  t.className = 'thumbs ' + side;
+  thumbs.forEach(tk => t.append(makeKeyEl(tk, true)));
+  wrap.append(half, t);
+  return wrap;
+}
+function makeKeyEl(k, isThumb) {
+  const el = document.createElement('div');
+  el.className = 'key' + (isThumb ? ' thumb' : '');
+  el.dataset.id = k.id;
+  el.dataset.style = k.style || '';
+  const span = document.createElement('span');
+  span.textContent = k.base;
+  el.append(span);
+  return el;
+}
+
+function setLayer(layer) {
+  currentLayer = layer;
+
+  // Update tabs
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.layer === layer);
+  });
+
+  // Update header
+  const ln = document.getElementById('layer-name');
+  ln.dataset.layer = layer;
+  ln.textContent = layer.charAt(0).toUpperCase() + layer.slice(1) + ' layer';
+  document.getElementById('layer-hint').textContent = LAYER_HINTS[layer];
+
+  // Update all keys
+  const allKeys = [...LAYOUT.left.flat(), ...LAYOUT.right.flat(), ...LAYOUT.thumbs.left, ...LAYOUT.thumbs.right];
+  allKeys.forEach(k => {
+    const el = document.querySelector(`[data-id="${k.id}"]`);
+    if (!el) return;
+    const label = k[layer];
+    el.firstChild.textContent = label;
+    el.className = 'key' + (k.id.includes('T') ? ' thumb' : '');
+    if (label === '·') el.classList.add('transparent');
+    // Layer-specific colorings
+    if (layer === 'adjust' && k.style) {
+      k.style.split(' ').forEach(c => el.classList.add(c));
+    } else if (layer !== 'adjust' && k.style && k.style.includes('layer-key')) {
+      // Always color the layer thumb keys
+      k.style.split(' ').forEach(c => el.classList.add(c));
+    }
+  });
+
+  renderLegend(layer);
+}
+
+function renderLegend(layer) {
+  const el = document.getElementById('legend');
+  el.replaceChildren();
+
+  const tmpl = document.createElement('div');
+  const h = document.createElement('h3');
+  const table = document.createElement('table');
+
+  if (layer === 'base') {
+    h.textContent = 'Base layer notes';
+    addRow(table, 'Left thumbs', '⌘ Cmd — LWR (hold for Lower) — ␣ Space');
+    addRow(table, 'Right thumbs', '⏎ Enter — RSE (hold for Raise) — ⌥ Alt');
+    addRow(table, 'Pinkies', 'Left: Ctrl (mid), Shift (bot). Right: Bksp (top), Esc (bot)');
+  } else if (layer === 'lower') {
+    h.textContent = 'Lower layer notes';
+    addRow(table, 'Top row', 'Numbers 1-0 (left-to-right, both hands)');
+    addRow(table, 'Right home', 'Arrow keys: H J K L → ← ↓ ↑ →');
+    addRow(table, 'Hold-and-tap-Raise', 'Both thumbs held → Adjust layer');
+  } else if (layer === 'raise') {
+    h.textContent = 'Raise layer notes';
+    addRow(table, 'Left top', 'Shifted-number symbols: ! @ # $ %');
+    addRow(table, 'Left home', '` (grave) and ~ (tilde)');
+    addRow(table, 'Right top', 'Operators: * & | ^ ?');
+    addRow(table, 'Right home', 'Bracket pairs: ( ) [ ] { }');
+    addRow(table, 'Right bot', 'Math/ops: - = + _ / \\');
+    addRow(table, 'Hold-and-tap-Lower', 'Both thumbs held → Adjust layer');
+  } else if (layer === 'adjust') {
+    h.textContent = 'Adjust layer — handle with care';
+    addRow(table, 'BT clr', 'Top-left (Q position). Clears current BT profile pairing — re-pair needed after.');
+    addRow(table, 'BT 0-3', 'Top row. Switch active host. Re-pair empty slots from BT settings.');
+    addRow(table, 'Unlock', 'A position. Enables ZMK Studio editing once connected.');
+    addRow(table, 'Boot', 'Left Ctrl / right apostrophe positions. Puts the half in UF2 bootloader for re-flashing (needs USB plugged in).');
+    addRow(table, 'Reset', 'Bottom corners. Soft reset of the controller. Mostly harmless.');
+    addRow(table, 'How to reach', "Hold BOTH Lower and Raise thumb keys, then tap the target. Don't tap top-left (BT clr) by accident.");
+  }
+
+  tmpl.append(h, table);
+  el.append(tmpl);
+}
+function addRow(table, label, value) {
+  const tr = document.createElement('tr');
+  const td1 = document.createElement('td'); td1.textContent = label;
+  const td2 = document.createElement('td'); td2.textContent = value;
+  tr.append(td1, td2);
+  table.append(tr);
+}
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => setLayer(t.dataset.layer));
+});
+window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  const map = { '1':'base', '2':'lower', '3':'raise', '4':'adjust',
+                'ArrowLeft':'prev', 'ArrowRight':'next' };
+  const action = map[e.key];
+  if (!action) return;
+  e.preventDefault();
+  if (action === 'prev' || action === 'next') {
+    const order = ['base','lower','raise','adjust'];
+    const i = order.indexOf(currentLayer);
+    const ni = action === 'next' ? (i + 1) % order.length : (i - 1 + order.length) % order.length;
+    setLayer(order[ni]);
+  } else {
+    setLayer(action);
+  }
+});
+
+renderKeyboard();
+setLayer('base');
+</script>
+</body>
+</html>
