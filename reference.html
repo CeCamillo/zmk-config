@@ -120,6 +120,21 @@
   .key.bt { color: var(--lower); }
   .key.boot { color: var(--adjust); border-color: #4a3b1b; }
 
+  .key.live-pressed {
+    background: linear-gradient(180deg, #2a4d2e, #1d3320) !important;
+    border-color: var(--lower) !important;
+    color: var(--base) !important;
+    box-shadow: 0 0 0 3px #4dd0e166, 0 0 16px #4dd0e188 !important;
+    transform: translateY(1px);
+  }
+  .live-indicator {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: #4ade80; margin-right: 6px;
+    box-shadow: 0 0 6px #4ade80aa;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse { 50% { opacity: 0.5; } }
+
   .thumbs { display: flex; gap: 5px; align-items: flex-end; margin-top: 5px; }
   .thumbs.left  { margin-left: 110px; transform: rotate(-8deg); transform-origin: top right; }
   .thumbs.right { margin-right: 110px; transform: rotate(8deg);  transform-origin: top left; }
@@ -155,7 +170,7 @@
 
   <div class="info-bar">
     <span class="layer-name" id="layer-name" data-layer="base">Base layer</span>
-    <span class="layer-hint" id="layer-hint">Default — what types when no layer keys are held.</span>
+    <span class="layer-hint" id="layer-hint"><span class="live-indicator"></span>Live — keys you press will glow and the view will follow.</span>
   </div>
 
   <div class="kbd-wrap"><div class="kbd" id="kbd"></div></div>
@@ -173,73 +188,78 @@ const LAYER_HINTS = {
   adjust: "Hold BOTH Lower and Raise. Bluetooth + bootloader + Studio unlock."
 };
 
-// Each key: id, base, lower, raise, adjust labels + optional style hints
+// Each key: id, code (KeyboardEvent.code), labels per layer, optional style hints
 const LAYOUT = {
   left: [
     [
-      { id:'L00', base:'Tab',  lower:'Tab',  raise:'Tab',  adjust:'·' },
-      { id:'L01', base:'Q',    lower:'1',    raise:'!',    adjust:'BT clr', style:'danger' },
-      { id:'L02', base:'W',    lower:'2',    raise:'@',    adjust:'BT 0',   style:'bt' },
-      { id:'L03', base:'E',    lower:'3',    raise:'#',    adjust:'BT 1',   style:'bt' },
-      { id:'L04', base:'R',    lower:'4',    raise:'$',    adjust:'BT 2',   style:'bt' },
-      { id:'L05', base:'T',    lower:'5',    raise:'%',    adjust:'BT 3',   style:'bt' },
+      { id:'L00', code:'Tab',         base:'Tab',  lower:'Tab',  raise:'Tab',  adjust:'·' },
+      { id:'L01', code:'KeyQ',        base:'Q',    lower:'1',    raise:'!',    adjust:'BT clr', style:'danger' },
+      { id:'L02', code:'KeyW',        base:'W',    lower:'2',    raise:'@',    adjust:'BT 0',   style:'bt' },
+      { id:'L03', code:'KeyE',        base:'E',    lower:'3',    raise:'#',    adjust:'BT 1',   style:'bt' },
+      { id:'L04', code:'KeyR',        base:'R',    lower:'4',    raise:'$',    adjust:'BT 2',   style:'bt' },
+      { id:'L05', code:'KeyT',        base:'T',    lower:'5',    raise:'%',    adjust:'BT 3',   style:'bt' },
     ],
     [
-      { id:'L10', base:'Ctrl', lower:'Ctrl', raise:'Ctrl', adjust:'Boot',   style:'boot' },
-      { id:'L11', base:'A',    lower:'·',    raise:'`',    adjust:'Unlock', style:'bt' },
-      { id:'L12', base:'S',    lower:'·',    raise:'~',    adjust:'·' },
-      { id:'L13', base:'D',    lower:'·',    raise:'·',    adjust:'·' },
-      { id:'L14', base:'F',    lower:'·',    raise:'·',    adjust:'·' },
-      { id:'L15', base:'G',    lower:'·',    raise:'·',    adjust:'·' },
+      { id:'L10', code:'ControlLeft', base:'Ctrl', lower:'Ctrl', raise:'Ctrl', adjust:'Boot',   style:'boot' },
+      { id:'L11', code:'KeyA',        base:'A',    lower:'·',    raise:'`',    adjust:'Unlock', style:'bt' },
+      { id:'L12', code:'KeyS',        base:'S',    lower:'·',    raise:'~',    adjust:'·' },
+      { id:'L13', code:'KeyD',        base:'D',    lower:'·',    raise:'·',    adjust:'·' },
+      { id:'L14', code:'KeyF',        base:'F',    lower:'·',    raise:'·',    adjust:'·' },
+      { id:'L15', code:'KeyG',        base:'G',    lower:'·',    raise:'·',    adjust:'·' },
     ],
     [
-      { id:'L20', base:'Shft', lower:'Shft', raise:'Shft', adjust:'Reset', style:'danger' },
-      { id:'L21', base:'Z',    lower:'·',    raise:'·',    adjust:'·' },
-      { id:'L22', base:'X',    lower:'·',    raise:'·',    adjust:'·' },
-      { id:'L23', base:'C',    lower:'·',    raise:'·',    adjust:'·' },
-      { id:'L24', base:'V',    lower:'·',    raise:'·',    adjust:'·' },
-      { id:'L25', base:'B',    lower:'·',    raise:'·',    adjust:'·' },
+      { id:'L20', code:'ShiftLeft',   base:'Shft', lower:'Shft', raise:'Shft', adjust:'Reset', style:'danger' },
+      { id:'L21', code:'KeyZ',        base:'Z',    lower:'·',    raise:'·',    adjust:'·' },
+      { id:'L22', code:'KeyX',        base:'X',    lower:'·',    raise:'·',    adjust:'·' },
+      { id:'L23', code:'KeyC',        base:'C',    lower:'·',    raise:'·',    adjust:'·' },
+      { id:'L24', code:'KeyV',        base:'V',    lower:'·',    raise:'·',    adjust:'·' },
+      { id:'L25', code:'KeyB',        base:'B',    lower:'·',    raise:'·',    adjust:'·' },
     ],
   ],
   right: [
     [
-      { id:'R00', base:'Y',    lower:'6',    raise:'*',    adjust:'·' },
-      { id:'R01', base:'U',    lower:'7',    raise:'&',    adjust:'·' },
-      { id:'R02', base:'I',    lower:'8',    raise:'|',    adjust:'·' },
-      { id:'R03', base:'O',    lower:'9',    raise:'^',    adjust:'·' },
-      { id:'R04', base:'P',    lower:'0',    raise:'?',    adjust:'·' },
-      { id:'R05', base:'Bksp', lower:'Bksp', raise:'Bksp', adjust:'·' },
+      { id:'R00', code:'KeyY',        base:'Y',    lower:'6',    raise:'*',    adjust:'·' },
+      { id:'R01', code:'KeyU',        base:'U',    lower:'7',    raise:'&',    adjust:'·' },
+      { id:'R02', code:'KeyI',        base:'I',    lower:'8',    raise:'|',    adjust:'·' },
+      { id:'R03', code:'KeyO',        base:'O',    lower:'9',    raise:'^',    adjust:'·' },
+      { id:'R04', code:'KeyP',        base:'P',    lower:'0',    raise:'?',    adjust:'·' },
+      { id:'R05', code:'Backspace',   base:'Bksp', lower:'Bksp', raise:'Bksp', adjust:'·' },
     ],
     [
-      { id:'R10', base:'H',    lower:'←',    raise:'(',    adjust:'·' },
-      { id:'R11', base:'J',    lower:'↓',    raise:')',    adjust:'·' },
-      { id:'R12', base:'K',    lower:'↑',    raise:'[',    adjust:'·' },
-      { id:'R13', base:'L',    lower:'→',    raise:']',    adjust:'·' },
-      { id:'R14', base:';',    lower:'·',    raise:'{',    adjust:'·' },
-      { id:'R15', base:"'",    lower:'·',    raise:'}',    adjust:'Boot', style:'boot' },
+      { id:'R10', code:'KeyH',        base:'H',    lower:'←',    raise:'(',    adjust:'·' },
+      { id:'R11', code:'KeyJ',        base:'J',    lower:'↓',    raise:')',    adjust:'·' },
+      { id:'R12', code:'KeyK',        base:'K',    lower:'↑',    raise:'[',    adjust:'·' },
+      { id:'R13', code:'KeyL',        base:'L',    lower:'→',    raise:']',    adjust:'·' },
+      { id:'R14', code:'Semicolon',   base:';',    lower:'·',    raise:'{',    adjust:'·' },
+      { id:'R15', code:'Quote',       base:"'",    lower:'·',    raise:'}',    adjust:'Boot', style:'boot' },
     ],
     [
-      { id:'R20', base:'N',    lower:'·',    raise:'-',    adjust:'·' },
-      { id:'R21', base:'M',    lower:'·',    raise:'=',    adjust:'·' },
-      { id:'R22', base:',',    lower:'·',    raise:'+',    adjust:'·' },
-      { id:'R23', base:'.',    lower:'·',    raise:'_',    adjust:'·' },
-      { id:'R24', base:'/',    lower:'·',    raise:'/',    adjust:'·' },
-      { id:'R25', base:'Esc',  lower:'Esc',  raise:'\\',   adjust:'Reset', style:'danger' },
+      { id:'R20', code:'KeyN',        base:'N',    lower:'·',    raise:'-',    adjust:'·' },
+      { id:'R21', code:'KeyM',        base:'M',    lower:'·',    raise:'=',    adjust:'·' },
+      { id:'R22', code:'Comma',       base:',',    lower:'·',    raise:'+',    adjust:'·' },
+      { id:'R23', code:'Period',      base:'.',    lower:'·',    raise:'_',    adjust:'·' },
+      { id:'R24', code:'Slash',       base:'/',    lower:'·',    raise:'/',    adjust:'·' },
+      { id:'R25', code:'Escape',      base:'Esc',  lower:'Esc',  raise:'\\',   adjust:'Reset', style:'danger' },
     ],
   ],
   thumbs: {
     left: [
-      { id:'LT0', base:'⌘',    lower:'⌘',    raise:'⌘',    adjust:'·' },
-      { id:'LT1', base:'LWR',  lower:'LWR',  raise:'LWR',  adjust:'LWR', style:'layer-key lower' },
-      { id:'LT2', base:'␣',    lower:'␣',    raise:'␣',    adjust:'·' },
+      { id:'LT0', code:'MetaLeft',    base:'⌘',    lower:'⌘',    raise:'⌘',    adjust:'·' },
+      { id:'LT1', code:null,          base:'LWR',  lower:'LWR',  raise:'LWR',  adjust:'LWR', style:'layer-key lower' },
+      { id:'LT2', code:'Space',       base:'␣',    lower:'␣',    raise:'␣',    adjust:'·' },
     ],
     right: [
-      { id:'RT0', base:'⏎',    lower:'⏎',    raise:'⏎',    adjust:'·' },
-      { id:'RT1', base:'RSE',  lower:'RSE',  raise:'RSE',  adjust:'RSE', style:'layer-key' },
-      { id:'RT2', base:'⌥',    lower:'⌥',    raise:'⌥',    adjust:'·' },
+      { id:'RT0', code:'Enter',       base:'⏎',    lower:'⏎',    raise:'⏎',    adjust:'·' },
+      { id:'RT1', code:null,          base:'RSE',  lower:'RSE',  raise:'RSE',  adjust:'RSE', style:'layer-key' },
+      { id:'RT2', code:'AltRight',    base:'⌥',    lower:'⌥',    raise:'⌥',    adjust:'·' },
     ]
   }
 };
+
+// Flat index by code for fast lookup
+const KEY_BY_CODE = {};
+[...LAYOUT.left.flat(), ...LAYOUT.right.flat(), ...LAYOUT.thumbs.left, ...LAYOUT.thumbs.right]
+  .forEach(k => { if (k.code) KEY_BY_CODE[k.code] = k; });
 
 let currentLayer = 'base';
 
@@ -289,7 +309,13 @@ function setLayer(layer) {
   const ln = document.getElementById('layer-name');
   ln.dataset.layer = layer;
   ln.textContent = layer.charAt(0).toUpperCase() + layer.slice(1) + ' layer';
-  document.getElementById('layer-hint').textContent = LAYER_HINTS[layer];
+  const hint = document.getElementById('layer-hint');
+  hint.replaceChildren();
+  const dot = document.createElement('span');
+  dot.className = 'live-indicator';
+  const txt = document.createElement('span');
+  txt.textContent = LAYER_HINTS[layer];
+  hint.append(dot, txt);
 
   // Update all keys
   const allKeys = [...LAYOUT.left.flat(), ...LAYOUT.right.flat(), ...LAYOUT.thumbs.left, ...LAYOUT.thumbs.right];
@@ -362,22 +388,88 @@ function addRow(table, label, value) {
 document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => setLayer(t.dataset.layer));
 });
+
+// Normalize KeyboardEvent.key to match the labels in LAYOUT
+function normalizeKey(eKey) {
+  const special = {
+    'ArrowLeft':'←', 'ArrowRight':'→', 'ArrowUp':'↑', 'ArrowDown':'↓',
+    'Enter':'⏎', ' ':'␣', 'Backspace':'Bksp', 'Escape':'Esc', 'Tab':'Tab',
+    'Meta':'⌘', 'Alt':'⌥', 'Control':'Ctrl', 'Shift':'Shft'
+  };
+  if (special[eKey]) return special[eKey];
+  if (eKey.length === 1) return eKey.toUpperCase();
+  return eKey;
+}
+
+function detectLayer(key, eKey) {
+  const norm = normalizeKey(eKey);
+  // If current layer already matches what was produced, don't churn the UI
+  if (key[currentLayer] === norm) return null;
+  for (const layer of ['lower','raise','adjust']) {
+    if (key[layer] === norm) return layer;
+  }
+  if (key.base === norm) return 'base';
+  return null;
+}
+
+// Track which physical keys are currently held down
+const heldCodes = new Set();
+
+function renderHeld() {
+  document.querySelectorAll('.key.live-pressed').forEach(el => el.classList.remove('live-pressed'));
+  heldCodes.forEach(code => {
+    const key = KEY_BY_CODE[code];
+    if (!key) return;
+    const el = document.querySelector(`[data-id="${key.id}"]`);
+    if (el) el.classList.add('live-pressed');
+  });
+}
+
+function clearHeld() {
+  heldCodes.clear();
+  renderHeld();
+}
+
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-  const map = { '1':'base', '2':'lower', '3':'raise', '4':'adjust',
-                'ArrowLeft':'prev', 'ArrowRight':'next' };
-  const action = map[e.key];
-  if (!action) return;
-  e.preventDefault();
-  if (action === 'prev' || action === 'next') {
+  if (e.repeat) return; // OS auto-repeat — already tracked
+
+  // 1) Positional match: a Corne key was pressed → track + auto-switch layer
+  const key = KEY_BY_CODE[e.code];
+  if (key) {
+    e.preventDefault();
+    heldCodes.add(e.code);
+    const layer = detectLayer(key, e.key);
+    if (layer) setLayer(layer);
+    renderHeld();
+    return;
+  }
+
+  // 2) Fallback navigation for keys not on the Corne
+  const navMap = { '1':'base', '2':'lower', '3':'raise', '4':'adjust' };
+  if (navMap[e.key]) {
+    e.preventDefault();
+    setLayer(navMap[e.key]);
+    return;
+  }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    e.preventDefault();
     const order = ['base','lower','raise','adjust'];
     const i = order.indexOf(currentLayer);
-    const ni = action === 'next' ? (i + 1) % order.length : (i - 1 + order.length) % order.length;
+    const ni = e.key === 'ArrowRight' ? (i + 1) % order.length : (i - 1 + order.length) % order.length;
     setLayer(order[ni]);
-  } else {
-    setLayer(action);
   }
 });
+
+window.addEventListener('keyup', (e) => {
+  if (heldCodes.has(e.code)) {
+    heldCodes.delete(e.code);
+    renderHeld();
+  }
+});
+
+// If the page loses focus, the OS may eat keyup events — clear stuck highlights
+window.addEventListener('blur', clearHeld);
 
 renderKeyboard();
 setLayer('base');
