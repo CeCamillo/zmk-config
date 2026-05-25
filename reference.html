@@ -152,6 +152,18 @@
   .legend table { width: 100%; border-collapse: collapse; }
   .legend td { padding: 4px 8px; vertical-align: top; }
   .legend td:first-child { color: var(--text); white-space: nowrap; }
+
+  .event-log {
+    margin-top: 1rem; padding: 0.75rem 1rem;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 8px; font-family: "JetBrains Mono", Menlo, monospace;
+    font-size: 0.8rem; color: var(--text-dim);
+    max-height: 130px; overflow-y: auto;
+  }
+  .event-log h4 { margin: 0 0 0.25rem; color: var(--text); font-size: 0.85rem; font-family: inherit; }
+  .event-log .row { padding: 1px 0; }
+  .event-log .row.down { color: var(--lower); }
+  .event-log .row.up   { color: var(--text-dim); }
 </style>
 </head>
 <body>
@@ -162,10 +174,10 @@
   </header>
 
   <div class="tabs" id="tabs">
-    <button class="tab active" data-layer="base">   <span class="dot"></span> Base   <kbd>1</kbd></button>
-    <button class="tab"        data-layer="lower">  <span class="dot"></span> Lower  <kbd>2</kbd></button>
-    <button class="tab"        data-layer="raise">  <span class="dot"></span> Raise  <kbd>3</kbd></button>
-    <button class="tab"        data-layer="adjust"> <span class="dot"></span> Adjust <kbd>4</kbd></button>
+    <button class="tab active" data-layer="base">   <span class="dot"></span> Base</button>
+    <button class="tab"        data-layer="lower">  <span class="dot"></span> Lower</button>
+    <button class="tab"        data-layer="raise">  <span class="dot"></span> Raise</button>
+    <button class="tab"        data-layer="adjust"> <span class="dot"></span> Adjust</button>
   </div>
 
   <div class="info-bar">
@@ -176,6 +188,11 @@
   <div class="kbd-wrap"><div class="kbd" id="kbd"></div></div>
 
   <div class="legend" id="legend"></div>
+
+  <div class="event-log" id="event-log">
+    <h4>Live key events <span style="color: var(--text-dim); font-weight: normal;">— newest at top. Press LWR/RSE to verify F23/F24 emit.</span></h4>
+    <div id="event-log-rows"></div>
+  </div>
 </div>
 
 <script>
@@ -245,12 +262,12 @@ const LAYOUT = {
   thumbs: {
     left: [
       { id:'LT0', code:'MetaLeft',    base:'⌘',    lower:'⌘',    raise:'⌘',    adjust:'·' },
-      { id:'LT1', code:null,          base:'LWR',  lower:'LWR',  raise:'LWR',  adjust:'LWR', style:'layer-key lower' },
+      { id:'LT1', code:'F23',         base:'LWR',  lower:'LWR',  raise:'LWR',  adjust:'LWR', style:'layer-key lower' },
       { id:'LT2', code:'Space',       base:'␣',    lower:'␣',    raise:'␣',    adjust:'·' },
     ],
     right: [
       { id:'RT0', code:'Enter',       base:'⏎',    lower:'⏎',    raise:'⏎',    adjust:'·' },
-      { id:'RT1', code:null,          base:'RSE',  lower:'RSE',  raise:'RSE',  adjust:'RSE', style:'layer-key' },
+      { id:'RT1', code:'F24',         base:'RSE',  lower:'RSE',  raise:'RSE',  adjust:'RSE', style:'layer-key' },
       { id:'RT2', code:'AltRight',    base:'⌥',    lower:'⌥',    raise:'⌥',    adjust:'·' },
     ]
   }
@@ -430,11 +447,41 @@ function clearHeld() {
   renderHeld();
 }
 
+// Recompute layer based on which thumb-layer signals (F23 / F24) are currently held
+function layerFromThumbs() {
+  const lwr = heldCodes.has('F23');
+  const rse = heldCodes.has('F24');
+  if (lwr && rse) return 'adjust';
+  if (lwr) return 'lower';
+  if (rse) return 'raise';
+  return 'base';
+}
+
+function logEvent(kind, e) {
+  const log = document.getElementById('event-log-rows');
+  if (!log) return;
+  const row = document.createElement('div');
+  row.className = 'row ' + kind;
+  row.textContent = `${kind === 'down' ? '↓' : '↑'} code=${e.code}  key=${JSON.stringify(e.key)}`;
+  log.prepend(row);
+  while (log.children.length > 20) log.lastChild.remove();
+}
+
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   if (e.repeat) return; // OS auto-repeat — already tracked
+  logEvent('down', e);
 
-  // 1) Positional match: a Corne key was pressed → track + auto-switch layer
+  // 1) Layer-signal keys (F23 = LWR, F24 = RSE): always drive the layer view explicitly
+  if (e.code === 'F23' || e.code === 'F24') {
+    e.preventDefault();
+    heldCodes.add(e.code);
+    setLayer(layerFromThumbs());
+    renderHeld();
+    return;
+  }
+
+  // 2) Positional match: a Corne key was pressed → track + auto-switch layer
   const key = KEY_BY_CODE[e.code];
   if (key) {
     e.preventDefault();
@@ -445,27 +492,18 @@ window.addEventListener('keydown', (e) => {
     return;
   }
 
-  // 2) Fallback navigation for keys not on the Corne
-  const navMap = { '1':'base', '2':'lower', '3':'raise', '4':'adjust' };
-  if (navMap[e.key]) {
-    e.preventDefault();
-    setLayer(navMap[e.key]);
-    return;
-  }
-  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-    e.preventDefault();
-    const order = ['base','lower','raise','adjust'];
-    const i = order.indexOf(currentLayer);
-    const ni = e.key === 'ArrowRight' ? (i + 1) % order.length : (i - 1 + order.length) % order.length;
-    setLayer(order[ni]);
-  }
+  // 3) Otherwise: ignore. (Use the mouse to click tabs if you want manual layer switching.)
 });
 
 window.addEventListener('keyup', (e) => {
-  if (heldCodes.has(e.code)) {
-    heldCodes.delete(e.code);
-    renderHeld();
+  logEvent('up', e);
+  if (!heldCodes.has(e.code)) return;
+  heldCodes.delete(e.code);
+  // If a layer-signal key was released, re-evaluate the layer view
+  if (e.code === 'F23' || e.code === 'F24') {
+    setLayer(layerFromThumbs());
   }
+  renderHeld();
 });
 
 // If the page loses focus, the OS may eat keyup events — clear stuck highlights
